@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Assign to the Experience site guest user. Grants the Apex and read access the public job board needs. Field-level read access on the TR1__Job__c fields you display must be granted too (see README).</description>
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>Job Board Guest Access</label>
+    <classAccesses>
+        <apexClass>JobBoardController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <objectPermissions>
+        <allowCreate>false</allowCreate>
+        <allowDelete>false</allowDelete>
+        <allowEdit>false</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>false</modifyAllRecords>
+        <object>TR1__Job__c</object>
+        <viewAllRecords>false</viewAllRecords>
+    </objectPermissions>
+</PermissionSet>

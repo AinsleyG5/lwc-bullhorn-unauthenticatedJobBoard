@@ -1,0 +1,163 @@
+<template>
+    <template lwc:if={displayProperty}>
+        <template lwc:if={fieldError}>
+            <p class="error">Field list unavailable: {fieldError}. You can still edit fields in the Advanced (JSON) section.</p>
+        </template>
+
+        <lightning-accordion allow-multiple-sections-open active-section-name="data">
+
+            <!-- ============ Data ============ -->
+            <lightning-accordion-section name="data" label="Jobs & search">
+                <lightning-input label="Account Id" name="data.accountId" value={editorValues.data.accountId}
+                    field-level-help="Only open jobs linked to this account are shown. A Job Board Setting record can pin the account server-side instead."
+                    onchange={handleChange} onblur={handleReturnValue}></lightning-input>
+                <lightning-combobox label="Job title field" name="data.titleField" value={editorValues.data.titleField}
+                    options={titleFieldOptions} data-return="true" onchange={handleChange}></lightning-combobox>
+                <lightning-input label="Search fields" name="data.searchFields" value={editorValues.data.searchFields}
+                    field-level-help="Comma-separated API names the search bar looks in, e.g. Name, TR1__City__c"
+                    onchange={handleChange} onblur={handleReturnValue}></lightning-input>
+                <lightning-combobox label="Posted date field" name="data.dateField" value={editorValues.data.dateField}
+                    options={dateFieldOptions} data-return="true" onchange={handleChange}
+                    field-level-help="Used for 'Newest first'."></lightning-combobox>
+                <lightning-combobox label="Salary field (number)" name="data.salaryField" value={editorValues.data.salaryField}
+                    options={salaryFieldOptions} data-return="true" onchange={handleChange}
+                    field-level-help="Enables 'Highest salary' sorting."></lightning-combobox>
+                <lightning-input label="Currency code" name="data.currencyCode" value={editorValues.data.currencyCode}
+                    placeholder="Org default" field-level-help="ISO code such as GBP, EUR or USD for salary formatting."
+                    onchange={handleChange} onblur={handleReturnValue}></lightning-input>
+                <lightning-combobox label="Default sort" name="data.defaultSort" value={editorValues.data.defaultSort}
+                    options={sortOptions} data-return="true" onchange={handleChange}></lightning-combobox>
+                <lightning-input type="number" label="Jobs per page" name="data.pageSize" value={editorValues.data.pageSize}
+                    min="1" max="50" data-type="number" onchange={handleChange} onblur={handleReturnValue}></lightning-input>
+                <lightning-input type="checkbox" label="Show setup notes on the live site (debug)" name="data.debug"
+                    checked={editorValues.data.debug} data-return="true" onchange={handleChange}></lightning-input>
+            </lightning-accordion-section>
+
+            <!-- ============ Branding ============ -->
+            <lightning-accordion-section name="branding" label="Branding">
+                <div class="grid-2">
+                    <template for:each={themeColorInputs} for:item="c">
+                        <lightning-input key={c.key} type="color" label={c.label} name={c.name} value={c.value}
+                            onchange={handleChange} onblur={handleReturnValue}></lightning-input>
+                    </template>
+                </div>
+                <lightning-input label="Body font family" name="theme.fontFamily" value={editorValues.theme.fontFamily}
+                    field-level-help="'inherit' uses the site's font. Otherwise a CSS font stack, e.g. 'Red Hat Display', sans-serif"
+                    onchange={handleChange} onblur={handleReturnValue}></lightning-input>
+                <lightning-input label="Heading font family" name="theme.headingFontFamily" value={editorValues.theme.headingFontFamily}
+                    onchange={handleChange} onblur={handleReturnValue}></lightning-input>
+                <div class="grid-2">
+                    <lightning-input type="number" label="Heading weight" name="theme.headingWeight" value={editorValues.theme.headingWeight}
+                        min="100" max="900" step="100" data-type="number" onchange={handleChange} onblur={handleReturnValue}></lightning-input>
+                    <lightning-input type="number" label="Corner radius (px)" name="theme.radius" value={editorValues.theme.radius}
+                        min="0" max="32" data-type="number" onchange={handleChange} onblur={handleReturnValue}></lightning-input>
+                    <lightning-input type="number" label="Max width (px)" name="theme.maxWidth" value={editorValues.theme.maxWidth}
+                        min="640" max="2400" data-type="number" onchange={handleChange} onblur={handleReturnValue}></lightning-input>
+                    <lightning-input type="number" label="Min card width (px)" name="theme.cardMinWidth" value={editorValues.theme.cardMinWidth}
+                        min="220" max="600" data-type="number" onchange={handleChange} onblur={handleReturnValue}
+                        field-level-help="Cards per row follow from this and the screen width."></lightning-input>
+                </div>
+                <lightning-input label="Hero image URL" name="theme.heroImageUrl" value={editorValues.theme.heroImageUrl}
+                    field-level-help="https:// or a site-relative path. External hosts must be added to the site's trusted sites (CSP)."
+                    onchange={handleChange} onblur={handleReturnValue}></lightning-input>
+                <lightning-input label="Logo URL" name="layout.logoUrl" value={editorValues.layout.logoUrl}
+                    onchange={handleChange} onblur={handleReturnValue}></lightning-input>
+                <lightning-input label="Company name (logo alt text)" name="layout.companyName" value={editorValues.layout.companyName}
+                    onchange={handleChange} onblur={handleReturnValue}></lightning-input>
+                <lightning-button class="block" label="Reset branding to defaults" icon-name="utility:undo" onclick={handleResetTheme}></lightning-button>
+            </lightning-accordion-section>
+
+            <!-- ============ Layout ============ -->
+            <lightning-accordion-section name="layout" label="Layout">
+                <lightning-input type="checkbox" label="Show hero & search banner" name="layout.showHero"
+                    checked={editorValues.layout.showHero} data-return="true" onchange={handleChange}></lightning-input>
+                <lightning-input type="checkbox" label="Show logo in hero" name="layout.showLogo"
+                    checked={editorValues.layout.showLogo} data-return="true" onchange={handleChange}></lightning-input>
+                <lightning-combobox label="Filter panel" name="layout.filterPanelMode" value={editorValues.layout.filterPanelMode}
+                    options={panelModes} data-return="true" onchange={handleChange}></lightning-combobox>
+                <lightning-input type="checkbox" label="Filter panel open on page load (desktop)" name="layout.filterPanelOpenByDefault"
+                    checked={editorValues.layout.filterPanelOpenByDefault} data-return="true" onchange={handleChange}></lightning-input>
+                <lightning-input type="checkbox" label="Show result count" name="layout.showResultCount"
+                    checked={editorValues.layout.showResultCount} data-return="true" onchange={handleChange}></lightning-input>
+            </lightning-accordion-section>
+
+            <!-- ============ Filters ============ -->
+            <lightning-accordion-section name="filters" label="Search filters">
+                <c-job-board-field-list-editor variant="filter" add-label="Add filter" items={editorValues.filters}
+                    field-options={fieldOptions} data-path="filters" onlistchange={handleListChange}></c-job-board-field-list-editor>
+            </lightning-accordion-section>
+
+            <!-- ============ Card ============ -->
+            <lightning-accordion-section name="card" label="Job card">
+                <c-job-board-field-list-editor variant="field" add-label="Add card field" items={editorValues.card.fields}
+                    field-options={fieldOptions} data-path="card.fields" onlistchange={handleListChange}></c-job-board-field-list-editor>
+                <lightning-combobox class="spaced" label="Summary text field" name="data.snippetField" value={editorValues.data.snippetField}
+                    options={snippetFieldOptions} data-return="true" onchange={handleChange}></lightning-combobox>
+                <lightning-input type="number" label="Summary length (characters)" name="data.snippetLength"
+                    value={editorValues.data.snippetLength} min="0" max="600" data-type="number"
+                    onchange={handleChange} onblur={handleReturnValue}></lightning-input>
+                <lightning-input type="checkbox" label="Hide card fields with no value" name="layout.hideEmptyCardFields"
+                    checked={editorValues.layout.hideEmptyCardFields} data-return="true" onchange={handleChange}></lightning-input>
+            </lightning-accordion-section>
+
+            <!-- ============ Detail ============ -->
+            <lightning-accordion-section name="detail" label="Job detail (Read more)">
+                <p class="hint">Summary panel</p>
+                <c-job-board-field-list-editor variant="field" add-label="Add summary field" items={editorValues.detail.sidebarFields}
+                    field-options={fieldOptions} data-path="detail.sidebarFields" onlistchange={handleListChange}></c-job-board-field-list-editor>
+                <p class="hint spaced">Body sections</p>
+                <c-job-board-field-list-editor variant="section" add-label="Add section" items={editorValues.detail.sections}
+                    field-options={fieldOptions} data-path="detail.sections" onlistchange={handleListChange}></c-job-board-field-list-editor>
+            </lightning-accordion-section>
+
+            <!-- ============ Apply ============ -->
+            <lightning-accordion-section name="apply" label="Apply">
+                <lightning-combobox label="Apply button goes to" name="apply.target" value={editorValues.apply.target}
+                    options={applyTargets} data-return="true" onchange={handleChange}></lightning-combobox>
+                <template lwc:if={isNamedPageTarget}>
+                    <lightning-input label="Page API name" name="apply.pageApiName" value={editorValues.apply.pageApiName}
+                        field-level-help="The API name of the site page that hosts Job Apply, e.g. Apply__c"
+                        onchange={handleChange} onblur={handleReturnValue}></lightning-input>
+                    <lightning-input label="URL parameter for the job Id" name="apply.paramName" value={editorValues.apply.paramName}
+                        onchange={handleChange} onblur={handleReturnValue}></lightning-input>
+                </template>
+                <template lwc:if={isUrlTarget}>
+                    <lightning-input label="URL" name="apply.urlTemplate" value={editorValues.apply.urlTemplate}
+                        field-level-help="Use {jobId} where the job Id goes, e.g. /apply?recordId={jobId}"
+                        onchange={handleChange} onblur={handleReturnValue}></lightning-input>
+                </template>
+                <lightning-input type="checkbox" label="Open in a new tab" name="apply.newTab" checked={editorValues.apply.newTab}
+                    data-return="true" onchange={handleChange}></lightning-input>
+            </lightning-accordion-section>
+
+            <!-- ============ Labels ============ -->
+            <lightning-accordion-section name="labels" label="Labels & text">
+                <template for:each={labelGroups} for:item="g">
+                    <div key={g.name} class="label-group">
+                        <p class="hint">{g.label}</p>
+                        <template for:each={g.inputs} for:item="i">
+                            <lightning-input key={i.key} label={i.label} name={i.name} value={i.value}
+                                onchange={handleChange} onblur={handleReturnValue}></lightning-input>
+                        </template>
+                    </div>
+                </template>
+            </lightning-accordion-section>
+
+            <!-- ============ Advanced ============ -->
+            <lightning-accordion-section name="advanced" label="Advanced (JSON)">
+                <p class="hint-body">Edit the full configuration, e.g. to use a related field such as TR1__Account__r.BillingCity, or to copy settings between sites.</p>
+                <lightning-textarea class="json" label="Configuration" variant="label-hidden" value={jsonText}
+                    onchange={handleJsonInput}></lightning-textarea>
+                <template lwc:if={jsonError}>
+                    <p class="error">{jsonError}</p>
+                </template>
+                <lightning-button class="block" label="Apply JSON" variant="brand" onclick={handleJsonApply}></lightning-button>
+            </lightning-accordion-section>
+        </lightning-accordion>
+    </template>
+
+    <template lwc:else>
+        <lightning-button class="full" icon-name="utility:edit" variant="neutral" label="Edit Job Board Settings"
+            onclick={handleEditProperty}></lightning-button>
+    </template>
+</template>

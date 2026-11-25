@@ -1,0 +1,201 @@
+<template>
+    <c-job-board-theme theme={themeConfig}>
+        <div class="jb">
+            <template lwc:if={showWarnings}>
+                <div class="notice" role="status">
+                    <p class="notice__title">Job board setup notes (only shown in Experience Builder)</p>
+                    <ul class="notice__list">
+                        <template for:each={warnings} for:item="w">
+                            <li key={w}>{w}</li>
+                        </template>
+                    </ul>
+                </div>
+            </template>
+
+            <template lwc:if={isListView}>
+                <!-- ============ Hero & search ============ -->
+                <template lwc:if={showHero}>
+                    <section class={heroClass}>
+                        <div class="container hero__inner">
+                            <template lwc:if={showLogo}>
+                                <img class="hero__logo" src={logoSrc} alt={logoAlt} />
+                            </template>
+                            <h2 class="hero__title heading">{labels.heroHeadline}</h2>
+                            <template lwc:if={labels.heroSubtext}>
+                                <p class="hero__sub">{labels.heroSubtext}</p>
+                            </template>
+
+                            <form class="search" role="search" onsubmit={handleSearchSubmit}>
+                                <svg class="search__icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <circle cx="10.5" cy="10.5" r="6.5"></circle>
+                                    <path d="M15.5 15.5L21 21"></path>
+                                </svg>
+                                <label class="sr-only" for="search">{labels.searchPlaceholder}</label>
+                                <input id="search" class="search__input" type="search" autocomplete="off" maxlength="100"
+                                    placeholder={labels.searchPlaceholder} value={searchInput} oninput={handleSearchInput} />
+                                <template lwc:if={hasSearchInput}>
+                                    <button type="button" class="search__clear" onclick={handleClearSearch}>
+                                        <span class="sr-only">{labels.clearSearch}</span>
+                                        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+                                    </button>
+                                </template>
+                                <button type="submit" class="btn btn--solid search__submit">{labels.searchButton}</button>
+                            </form>
+                        </div>
+                    </section>
+                </template>
+
+                <!-- ============ Results ============ -->
+                <section class="container results-section" aria-labelledby="list-title">
+                    <h2 class="list-title heading" id="list-title">{labels.listHeadline}</h2>
+
+                    <div class="toolbar">
+                        <template lwc:if={hasFilters}>
+                            <button type="button" class="toolbar__filters" aria-controls="filters" aria-expanded={filtersExpanded}
+                                onclick={handleToggleFilters}>
+                                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"></path>
+                                    <circle cx="16" cy="6" r="2"></circle>
+                                    <circle cx="10" cy="12" r="2"></circle>
+                                    <circle cx="18" cy="18" r="2"></circle>
+                                </svg>
+                                <span>{filterToggleLabel}</span>
+                                <template lwc:if={hasActiveFilters}>
+                                    <span class="toolbar__badge">{activeFilterCount}</span>
+                                </template>
+                            </button>
+                        </template>
+
+                        <p class="toolbar__count" aria-live="polite">
+                            <template lwc:if={showResultCount}>{resultsCountLabel}</template>
+                        </p>
+
+                        <label class="toolbar__sort">
+                            <span class="toolbar__sort-label">{labels.sortLabel}</span>
+                            <span class="select">
+                                <select class="select__input" onchange={handleSortChange}>
+                                    <template for:each={sortOptions} for:item="o">
+                                        <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                                    </template>
+                                </select>
+                                <svg class="icon select__chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+                            </span>
+                        </label>
+                    </div>
+
+                    <template lwc:if={hasChips}>
+                        <ul class="chips list-reset" aria-label="Active filters">
+                            <template for:each={activeChips} for:item="c">
+                                <li key={c.key}>
+                                    <button type="button" class="chip" data-id={c.id} data-value={c.value} onclick={handleRemoveChip}>
+                                        <span>{c.label}</span>
+                                        <svg class="icon chip__x" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"></path></svg>
+                                        <span class="sr-only">(remove)</span>
+                                    </button>
+                                </li>
+                            </template>
+                            <li>
+                                <button type="button" class="link chips__clear" onclick={handleClearFilters}>{labels.clearFilters}</button>
+                            </li>
+                        </ul>
+                    </template>
+
+                    <div class={layoutClass}>
+                        <template lwc:if={filtersVisible}>
+                            <div class="scrim" onclick={handleCloseFilters}></div>
+                            <aside id="filters" class="filters" aria-label={labels.filtersTitle} onkeydown={handleDrawerKeydown}>
+                                <c-job-board-filters data-drawer={drawerAttr} filters={filterModels} labels={labels} total={total}
+                                    active-count={activeFilterCount} onfilterchange={handleFilterChange}
+                                    onclearall={handleClearFilters} onclose={handleCloseFilters}></c-job-board-filters>
+                            </aside>
+                        </template>
+
+                        <div class="results" aria-busy={loading}>
+                            <template lwc:if={loading}>
+                                <ul class="grid list-reset" aria-hidden="true">
+                                    <template for:each={skeletons} for:item="s">
+                                        <li key={s.key} class="skeleton">
+                                            <div class="skeleton__head"></div>
+                                            <div class="skeleton__line"></div>
+                                            <div class="skeleton__line skeleton__line--short"></div>
+                                            <div class="skeleton__line"></div>
+                                        </li>
+                                    </template>
+                                </ul>
+                            </template>
+
+                            <template lwc:elseif={error}>
+                                <div class="state">
+                                    <p class="state__body">{errorText}</p>
+                                    <button type="button" class="btn btn--outline" onclick={handleRetry}>Try again</button>
+                                </div>
+                            </template>
+
+                            <template lwc:elseif={showEmpty}>
+                                <div class="state state--empty">
+                                    <h3 class="state__title heading">{labels.noResultsTitle}</h3>
+                                    <p class="state__body">{labels.noResultsBody}</p>
+                                    <div class="state__actions">
+                                        <template lwc:if={canClearFromEmpty}>
+                                            <button type="button" class="btn btn--outline" onclick={handleResetAll}>{labels.clearFilters}</button>
+                                        </template>
+                                        <template lwc:if={showNoResultsCta}>
+                                            <a class="btn btn--accent" href={noResultsCtaHref}>{labels.noResultsCtaLabel}</a>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <template lwc:else>
+                                <ul class="grid list-reset">
+                                    <template for:each={cards} for:item="job">
+                                        <li key={job.id} class="grid__item">
+                                            <c-job-board-card job={job} labels={labels} onapply={handleApply}
+                                                onreadmore={handleReadMore}></c-job-board-card>
+                                        </li>
+                                    </template>
+                                </ul>
+
+                                <template lwc:if={hasMore}>
+                                    <div class="more">
+                                        <button type="button" class="btn btn--outline" disabled={loadingMore} onclick={handleLoadMore}>
+                                            {labels.loadMore}
+                                        </button>
+                                    </div>
+                                </template>
+                            </template>
+                        </div>
+                    </div>
+                </section>
+            </template>
+
+            <template lwc:else>
+                <div class="container detail-section">
+                    <template lwc:if={detailLoading}>
+                        <div class="detail-skeleton" aria-busy="true">
+                            <div class="skeleton__title"></div>
+                            <div class="skeleton__line"></div>
+                            <div class="skeleton__line skeleton__line--short"></div>
+                        </div>
+                    </template>
+                    <template lwc:elseif={detailError}>
+                        <div class="state">
+                            <p class="state__body">{detailErrorText}</p>
+                            <a class="btn btn--outline" href={listHref} onclick={handleBackLink}>{labels.back}</a>
+                        </div>
+                    </template>
+                    <template lwc:elseif={detailNotFound}>
+                        <div class="state">
+                            <h1 class="state__title heading">{labels.jobNotFound}</h1>
+                            <a class="btn btn--outline" href={listHref} onclick={handleBackLink}>{labels.back}</a>
+                        </div>
+                    </template>
+                    <template lwc:elseif={detailModel}>
+                        <c-job-board-detail job={detailModel} labels={labels} list-href={listHref} onapply={handleApply}
+                            onback={handleBack}></c-job-board-detail>
+                    </template>
+                </div>
+            </template>
+        </div>
+    </c-job-board-theme>
+</template>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Server-side rules for the public job board (c/jobBoard). The record whose Network Id matches the current Experience site is used; otherwise the record named Default. These criteria cannot be changed from the browser.</description>
+    <label>Job Board Setting</label>
+    <pluralLabel>Job Board Settings</pluralLabel>
+    <visibility>Public</visibility>
+</CustomObject>

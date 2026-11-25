@@ -1,0 +1,50 @@
+:host {
+    display: block;
+}
+
+.full,
+.block {
+    display: block;
+    margin-top: 0.75rem;
+}
+
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 0.75rem;
+}
+
+.hint {
+    margin: 0.5rem 0 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #706e6b;
+}
+
+.hint-body {
+    font-size: 0.8125rem;
+    color: #3e3e3c;
+    margin-bottom: 0.5rem;
+}
+
+.spaced {
+    display: block;
+    margin-top: 1rem;
+}
+
+.label-group + .label-group {
+    margin-top: 1rem;
+}
+
+.error {
+    margin: 0.5rem 0;
+    font-size: 0.8125rem;
+    color: #ba0517;
+}
+
+.json {
+    --slds-c-textarea-sizing-min-height: 18rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}

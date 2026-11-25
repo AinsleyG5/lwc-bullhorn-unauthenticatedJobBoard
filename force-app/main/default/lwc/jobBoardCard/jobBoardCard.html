@@ -1,0 +1,36 @@
+<template>
+    <article class="card" aria-labelledby="title">
+        <header class="card__head">
+            <h3 class="card__title" id="title">
+                <a class="card__title-link" href={job.href} onclick={handleReadMore}>{job.title}</a>
+            </h3>
+        </header>
+
+        <div class="card__body">
+            <template lwc:if={job.hasFields}>
+                <dl class="card__fields">
+                    <template for:each={job.fields} for:item="f">
+                        <div class="card__field" key={f.key}>
+                            <dt class="card__label">{f.label}</dt>
+                            <dd class="card__value">{f.value}</dd>
+                        </div>
+                    </template>
+                </dl>
+            </template>
+
+            <template lwc:if={job.snippet}>
+                <p class="card__snippet">{job.snippet}</p>
+            </template>
+
+            <div class="card__actions">
+                <button type="button" class="btn btn--accent" onclick={handleApply}>
+                    {labels.apply}<span class="sr-only">: {job.title}</span>
+                </button>
+                <a class="link card__more" href={job.href} onclick={handleReadMore}>
+                    {labels.readMore}<span class="sr-only">: {job.title}</span>
+                    <svg class="card__caret" viewBox="0 0 8 8" aria-hidden="true"><path d="M2 1l4 3-4 3z"></path></svg>
+                </a>
+            </div>
+        </div>
+    </article>
+</template>

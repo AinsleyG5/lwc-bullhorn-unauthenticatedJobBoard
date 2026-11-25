@@ -1,0 +1,47 @@
+:host {
+    display: block;
+}
+
+/*
+ * Base tokens. The inline style from the theme config overrides these; the values here are only
+ * fallbacks so the board still renders sensibly with an empty config. Derived tokens (hover, tints)
+ * are mixed from the brand colours so customers only ever pick a handful of colours.
+ */
+.theme {
+    --jb-primary: #03237a;
+    --jb-on-primary: #ffffff;
+    --jb-accent: #74d9ca;
+    --jb-on-accent: #03237a;
+    --jb-button: #041e42;
+    --jb-on-button: #ffffff;
+    --jb-heading: #03237a;
+    --jb-text: #1e2a3b;
+    --jb-muted: #5b6675;
+    --jb-label: #2e9c8d;
+    --jb-surface: #ececec;
+    --jb-panel: #e9edf2;
+    --jb-page: #ffffff;
+    --jb-border: #c9ced6;
+    --jb-font: inherit;
+    --jb-heading-font: var(--jb-font);
+    --jb-heading-weight: 800;
+    --jb-radius: 0px;
+    --jb-max-width: 1320px;
+    --jb-card-min: 300px;
+    --jb-hero-image: none;
+
+    --jb-accent-hover: color-mix(in srgb, var(--jb-accent) 82%, var(--jb-on-accent));
+    --jb-button-hover: color-mix(in srgb, var(--jb-button) 80%, #ffffff);
+    --jb-primary-soft: color-mix(in srgb, var(--jb-primary) 7%, var(--jb-page));
+    --jb-focus: color-mix(in srgb, var(--jb-primary) 65%, var(--jb-accent));
+    --jb-gutter: clamp(1rem, 4vw, 4rem);
+    --jb-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+    font-family: var(--jb-font);
+    color: var(--jb-text);
+    background: var(--jb-page);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}

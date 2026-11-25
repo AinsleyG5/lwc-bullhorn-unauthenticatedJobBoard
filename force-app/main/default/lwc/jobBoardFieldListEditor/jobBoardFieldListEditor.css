@@ -1,0 +1,39 @@
+.list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.row {
+    display: grid;
+    gap: 0.25rem;
+    padding: 0.5rem 0.75rem 0.75rem;
+    border: 1px solid #dddbda;
+    border-radius: 0.25rem;
+    background: #fafaf9;
+}
+
+.row__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.row__num {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #706e6b;
+}
+
+.row__tools {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.empty {
+    font-size: 0.8125rem;
+    color: #706e6b;
+}
+
+.add {
+    justify-self: start;
+}

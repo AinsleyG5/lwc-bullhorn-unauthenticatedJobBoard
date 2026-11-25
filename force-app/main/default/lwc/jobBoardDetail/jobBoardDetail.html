@@ -1,0 +1,47 @@
+<template>
+    <article class="detail" aria-labelledby="title">
+        <header class="detail__head">
+            <h1 class="detail__title heading" id="title" tabindex="-1">{job.title}</h1>
+            <div class="detail__actions">
+                <button type="button" class="btn btn--accent" onclick={handleApply}>{labels.apply}</button>
+                <a class="btn btn--outline" href={listHref} onclick={handleBack}>{labels.back}</a>
+            </div>
+        </header>
+
+        <div class={layoutClass}>
+            <template lwc:if={job.hasSidebar}>
+                <aside class="detail__panel" aria-label="Job summary">
+                    <dl class="detail__facts">
+                        <template for:each={job.sidebar} for:item="f">
+                            <div class="detail__fact" key={f.key}>
+                                <dt class="detail__label">{f.label}</dt>
+                                <dd class="detail__value">{f.value}</dd>
+                            </div>
+                        </template>
+                    </dl>
+                </aside>
+            </template>
+
+            <div class="detail__body">
+                <template for:each={job.sections} for:item="s">
+                    <section class="detail__section" key={s.key}>
+                        <template lwc:if={s.heading}>
+                            <h2 class="detail__section-title">{s.heading}</h2>
+                        </template>
+                        <template lwc:if={s.isHtml}>
+                            <lightning-formatted-rich-text class="rich" value={s.html}></lightning-formatted-rich-text>
+                        </template>
+                        <template lwc:else>
+                            <p class="detail__text">{s.text}</p>
+                        </template>
+                    </section>
+                </template>
+
+                <div class="detail__footer">
+                    <button type="button" class="btn btn--accent" onclick={handleApply}>{labels.apply}</button>
+                    <a class="link" href={listHref} onclick={handleBack}>{labels.back}</a>
+                </div>
+            </div>
+        </div>
+    </article>
+</template>

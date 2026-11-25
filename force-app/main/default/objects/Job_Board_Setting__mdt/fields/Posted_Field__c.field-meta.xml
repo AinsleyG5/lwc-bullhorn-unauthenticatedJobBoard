@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Posted_Field__c</fullName>
+    <description>Optional API name of a checkbox on TR1__Job__c that must be ticked for a job to appear, for example TR1__Post_Externally__c.</description>
+    <externalId>false</externalId>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <inlineHelpText>Optional API name of a checkbox on TR1__Job__c that must be ticked for a job to appear, for example TR1__Post_Externally__c.</inlineHelpText>
+    <label>Posted Field</label>
+    <length>80</length>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

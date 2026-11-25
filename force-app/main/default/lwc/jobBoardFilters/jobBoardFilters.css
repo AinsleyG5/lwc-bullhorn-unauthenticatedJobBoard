@@ -1,0 +1,198 @@
+@import 'c/jobBoardStyles';
+
+:host {
+    display: block;
+    height: 100%;
+}
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.panel__head {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--jb-heading);
+}
+
+.panel__title {
+    font-family: var(--jb-heading-font);
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--jb-heading);
+    margin-right: auto;
+}
+
+.panel__clear {
+    font-size: 0.875rem;
+}
+
+.panel__close {
+    display: none;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    margin: -0.5rem -0.5rem -0.5rem 0;
+    border: 0;
+    background: none;
+    color: var(--jb-heading);
+    font-size: 1.25rem;
+    cursor: pointer;
+}
+
+.panel__groups {
+    flex: 1;
+}
+
+.group {
+    border-bottom: 1px solid var(--jb-border);
+}
+
+.group__summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 0;
+    cursor: pointer;
+    list-style: none;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    color: var(--jb-heading);
+}
+
+.group__summary::-webkit-details-marker {
+    display: none;
+}
+
+.group__label {
+    margin-right: auto;
+}
+
+.group__badge {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.375rem;
+    height: 1.375rem;
+    padding: 0 0.375rem;
+    border-radius: 999px;
+    background: var(--jb-heading);
+    color: var(--jb-page);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.group__chevron {
+    font-size: 1.125rem;
+    color: var(--jb-muted);
+    transition: transform 200ms var(--jb-ease);
+}
+
+.group[open] .group__chevron {
+    transform: rotate(180deg);
+}
+
+.group__body {
+    padding-bottom: 1.25rem;
+}
+
+.options {
+    display: grid;
+    gap: 0.125rem;
+}
+
+.option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.375rem 0;
+    font-size: 0.9375rem;
+    cursor: pointer;
+}
+
+.option__input {
+    width: 1.125rem;
+    height: 1.125rem;
+    margin: 0;
+    flex: none;
+    accent-color: var(--jb-heading);
+    cursor: pointer;
+}
+
+.option__label {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.option__count {
+    font-size: 0.8125rem;
+    color: var(--jb-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.option:hover .option__label {
+    color: var(--jb-heading);
+}
+
+.field {
+    width: 100%;
+    min-height: 2.5rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--jb-border);
+    border-radius: var(--jb-radius);
+    background: var(--jb-page);
+    font-size: 0.9375rem;
+}
+
+.field:focus {
+    border-color: var(--jb-heading);
+    outline: none;
+    box-shadow: 0 0 0 1px var(--jb-heading);
+}
+
+.option-search {
+    margin-bottom: 0.5rem;
+}
+
+.group__more {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    text-decoration-color: currentColor;
+}
+
+.group__empty {
+    font-size: 0.875rem;
+    color: var(--jb-muted);
+}
+
+.panel__foot {
+    display: none;
+}
+
+/*
+ * Drawer presentation (small screens, or drawer mode). The parent sets data-drawer on the host.
+ */
+:host([data-drawer]) .panel__close {
+    display: grid;
+}
+
+:host([data-drawer]) .panel__groups {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    margin-right: -0.5rem;
+    padding-right: 0.5rem;
+}
+
+:host([data-drawer]) .panel__foot {
+    display: block;
+    padding-top: 1rem;
+    border-top: 1px solid var(--jb-border);
+}
+
+:host([data-drawer]) .panel__done {
+    width: 100%;
+}

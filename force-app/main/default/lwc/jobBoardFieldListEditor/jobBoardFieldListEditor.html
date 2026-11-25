@@ -1,0 +1,48 @@
+<template>
+    <div class="list">
+        <template lwc:if={isEmpty}>
+            <p class="empty">Nothing added yet.</p>
+        </template>
+
+        <template for:each={rows} for:item="row">
+            <div class="row" key={row.key}>
+                <div class="row__head">
+                    <span class="row__num">{row.position}</span>
+                    <div class="row__tools">
+                        <lightning-button-icon icon-name="utility:arrowup" variant="bare" size="small" alternative-text="Move up"
+                            data-index={row.index} data-dir="-1" disabled={row.isFirst} onclick={handleMove}></lightning-button-icon>
+                        <lightning-button-icon icon-name="utility:arrowdown" variant="bare" size="small" alternative-text="Move down"
+                            data-index={row.index} data-dir="1" disabled={row.isLast} onclick={handleMove}></lightning-button-icon>
+                        <lightning-button-icon icon-name="utility:delete" variant="bare" size="small" alternative-text="Remove"
+                            data-index={row.index} onclick={handleRemove}></lightning-button-icon>
+                    </div>
+                </div>
+
+                <lightning-combobox label="Field" value={row.field} options={row.options} data-index={row.index}
+                    onchange={handleFieldChange} dropdown-alignment="auto"></lightning-combobox>
+
+                <template lwc:if={isSection}>
+                    <lightning-input label="Heading (optional)" value={row.heading} data-index={row.index} data-key="heading"
+                        onblur={handleTextBlur}></lightning-input>
+                </template>
+                <template lwc:else>
+                    <lightning-input label="Label" value={row.label} data-index={row.index} data-key="label"
+                        onblur={handleTextBlur}></lightning-input>
+                </template>
+
+                <template lwc:if={isFilter}>
+                    <lightning-combobox label="Filter type" value={row.type} options={typeOptions} data-index={row.index}
+                        onchange={handleTypeChange}></lightning-combobox>
+                    <template lwc:if={row.showOptions}>
+                        <lightning-input label="Choices" value={row.options} field-level-help={row.optionsHelp}
+                            data-index={row.index} data-key="options" onblur={handleTextBlur}></lightning-input>
+                    </template>
+                    <lightning-input type="checkbox" label="Start expanded" checked={row.expandedChecked} data-index={row.index}
+                        onchange={handleExpandedChange}></lightning-input>
+                </template>
+            </div>
+        </template>
+
+        <lightning-button class="add" label={addLabel} icon-name="utility:add" onclick={handleAdd}></lightning-button>
+    </div>
+</template>

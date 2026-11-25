@@ -1,0 +1,124 @@
+@import 'c/jobBoardStyles';
+
+:host {
+    display: block;
+}
+
+.detail__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.25rem 2.5rem;
+    padding-bottom: 2.25rem;
+    border-bottom: 1px solid var(--jb-border);
+}
+
+.detail__title {
+    flex: 1 1 32rem;
+    font-size: clamp(1.875rem, 1.3rem + 2vw, 2.75rem);
+    outline: none;
+}
+
+.detail__actions {
+    display: flex;
+    gap: 1rem;
+    padding-top: 0.5rem;
+}
+
+.detail__layout {
+    display: grid;
+    grid-template-columns: minmax(16rem, 26rem) minmax(0, 1fr);
+    gap: 2.5rem clamp(2rem, 6vw, 7.5rem);
+    align-items: start;
+    padding-top: 3rem;
+}
+
+.detail__layout--single {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.detail__panel {
+    position: sticky;
+    top: 1.5rem;
+    background: var(--jb-panel);
+    border-radius: var(--jb-radius);
+    padding: 1.75rem 2rem 2rem;
+}
+
+.detail__fact {
+    padding: 0.625rem 0 0.75rem;
+    border-bottom: 1px solid var(--jb-border);
+}
+
+.detail__fact:last-child {
+    border-bottom: 0;
+}
+
+.detail__label {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--jb-label);
+}
+
+.detail__value {
+    font-size: 0.9375rem;
+    color: var(--jb-text);
+}
+
+.detail__body {
+    max-width: 72ch;
+    font-size: 1rem;
+    line-height: 1.65;
+    color: var(--jb-text);
+}
+
+.detail__section + .detail__section {
+    margin-top: 2rem;
+}
+
+.detail__section-title {
+    font-family: var(--jb-heading-font);
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--jb-heading);
+    margin-bottom: 0.5rem;
+}
+
+.detail__text {
+    white-space: pre-line;
+}
+
+.rich {
+    display: block;
+}
+
+.detail__footer {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--jb-border);
+}
+
+@media (max-width: 860px) {
+    .detail__layout {
+        grid-template-columns: minmax(0, 1fr);
+        padding-top: 2rem;
+    }
+
+    .detail__panel {
+        position: static;
+    }
+}
+
+@media (max-width: 560px) {
+    .detail__actions {
+        width: 100%;
+    }
+
+    .detail__actions .btn {
+        flex: 1;
+    }
+}

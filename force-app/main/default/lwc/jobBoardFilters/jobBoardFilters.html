@@ -1,0 +1,87 @@
+<template>
+    <div class="panel">
+        <div class="panel__head">
+            <h2 class="panel__title">{labels.filtersTitle}</h2>
+            <template lwc:if={hasActive}>
+                <button type="button" class="link panel__clear" onclick={handleClear}>{labels.clearFilters}</button>
+            </template>
+            <button type="button" class="panel__close" onclick={handleClose}>
+                <span class="sr-only">{labels.closeFilters}</span>
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+            </button>
+        </div>
+
+        <div class="panel__groups">
+            <template for:each={groups} for:item="g">
+                <details class="group" key={g.id} open={g.expanded}>
+                    <summary class="group__summary">
+                        <span class="group__label">{g.label}</span>
+                        <template lwc:if={g.activeCount}>
+                            <span class="group__badge">{g.activeCount}</span>
+                        </template>
+                        <svg class="icon group__chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+                    </summary>
+
+                    <div class="group__body">
+                        <template lwc:if={g.isMulti}>
+                            <template lwc:if={g.showSearch}>
+                                <input type="search" class="field option-search" placeholder={labels.searchOptions}
+                                    aria-label={labels.searchOptions} data-id={g.id} value={g.search} oninput={handleOptionSearch} />
+                            </template>
+                            <ul class="options list-reset">
+                                <template for:each={g.visibleOptions} for:item="o">
+                                    <li key={o.key}>
+                                        <label class="option">
+                                            <input type="checkbox" class="option__input" data-id={g.id} data-value={o.value}
+                                                checked={o.checked} onchange={handleToggle} />
+                                            <span class="option__label">{o.label}</span>
+                                            <template lwc:if={o.hasCount}>
+                                                <span class="option__count">{o.count}</span>
+                                            </template>
+                                        </label>
+                                    </li>
+                                </template>
+                            </ul>
+                            <template lwc:if={g.noOptions}>
+                                <p class="group__empty">{labels.noOptions}</p>
+                            </template>
+                            <template lwc:if={g.canExpand}>
+                                <button type="button" class="link group__more" data-id={g.id} onclick={handleShowAll}>{g.expandLabel}</button>
+                            </template>
+                        </template>
+
+                        <template lwc:elseif={g.isChoice}>
+                            <ul class="options list-reset" role="radiogroup" aria-label={g.label}>
+                                <template for:each={g.options} for:item="o">
+                                    <li key={o.key}>
+                                        <label class="option">
+                                            <input type="radio" class="option__input" name={g.id} data-id={g.id} data-value={o.value}
+                                                checked={o.checked} onchange={handleChoice} />
+                                            <span class="option__label">{o.label}</span>
+                                        </label>
+                                    </li>
+                                </template>
+                            </ul>
+                        </template>
+
+                        <template lwc:elseif={g.isText}>
+                            <input type="text" class="field" aria-label={g.label} data-id={g.id} value={g.textValue}
+                                oninput={handleText} />
+                        </template>
+
+                        <template lwc:elseif={g.isBoolean}>
+                            <label class="option">
+                                <input type="checkbox" class="option__input" data-id={g.id} checked={g.checked} onchange={handleBoolean} />
+                                <span class="option__label">{g.label}</span>
+                            </label>
+                        </template>
+                    </div>
+                </details>
+            </template>
+        </div>
+
+        <div class="panel__foot">
+            <button type="button" class="btn btn--solid panel__done" onclick={handleClose}>{showResultsLabel}</button>
+        </div>
+    </div>
+</template>
