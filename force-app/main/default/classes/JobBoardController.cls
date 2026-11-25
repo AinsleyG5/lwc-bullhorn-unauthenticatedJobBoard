@@ -133,7 +133,7 @@ public with sharing class JobBoardController {
             Map<String, Schema.SObjectField> fieldMap = Schema.describeSObjects(new List<String>{ JobBoardQuery.JOB_OBJECT })[0].fields.getMap();
             for (Schema.SObjectField f : fieldMap.values()) {
                 Schema.DescribeFieldResult d = f.getDescribe();
-                if (!d.isAccessible()) {
+                if (!d.isAccessible() || JobBoardQuery.isBlockedField(d.getName())) {
                     continue;
                 }
                 if (d.getType() == Schema.DisplayType.REFERENCE) {

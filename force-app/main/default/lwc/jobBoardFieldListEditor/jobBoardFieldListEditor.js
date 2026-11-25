@@ -10,6 +10,8 @@ const TYPE_OPTIONS = [
     { value: 'boolean', label: 'Yes / no checkbox' }
 ];
 
+const AMOUNT_TYPES = ['minNumber', 'maxNumber'];
+
 const OPTIONS_HELP = {
     minNumber: 'Comma-separated amounts, e.g. 20000,30000,40000',
     maxNumber: 'Comma-separated amounts, e.g. 20000,30000,40000',
@@ -54,18 +56,30 @@ export default class JobBoardFieldListEditor extends LightningElement {
     get rows() {
         const known = new Set((this.fieldOptions || []).map((o) => o.value));
         const last = this._items.length - 1;
-        return this._items.map((item, index) => {
-            const options = [{ label: '— Select a field —', value: '' }, ...(this.fieldOptions || [])];
-            if (item.field && !known.has(item.field)) {
-                options.splice(1, 0, { label: `${item.field} (not found for this user)`, value: item.field });
+        const optionsFor = (value, emptyLabel) => {
+            const options = [{ label: emptyLabel, value: '' }, ...(this.fieldOptions || [])];
+            if (value && !known.has(value)) {
+                options.splice(1, 0, { label: `${value} (not found for this user)`, value });
             }
+            return options;
+        };
+        return this._items.map((item, index) => {
             const type = FILTER_TYPES.includes(item.type) ? item.type : 'multi';
+            // Amount filters can check two fields (e.g. high and low salary); stored as "A,B".
+            const isAmount = this.isFilter && AMOUNT_TYPES.includes(type);
+            const parts = String(item.field || '').split(',').map((s) => s.trim());
+            const primary = isAmount ? parts[0] || '' : item.field || '';
+            const secondary = isAmount ? parts[1] || '' : '';
             return {
                 ...item,
                 key: item.id || `row_${index}`,
                 index,
                 position: index + 1,
-                options,
+                primaryField: primary,
+                secondaryField: secondary,
+                options: optionsFor(primary, '— Select a field —'),
+                secondaryOptions: optionsFor(secondary, '— None —'),
+                isAmount,
                 type,
                 isFirst: index === 0,
                 isLast: index === last,
@@ -91,12 +105,19 @@ export default class JobBoardFieldListEditor extends LightningElement {
 
     handleFieldChange(event) {
         const index = Number(event.target.dataset.index);
-        const field = event.detail.value;
+        const slot = Number(event.target.dataset.slot || 0);
+        const picked = event.detail.value;
         const item = this._items[index];
+        let field = picked;
+        if (this.isFilter && AMOUNT_TYPES.includes(item.type)) {
+            const parts = String(item.field || '').split(',').map((s) => s.trim());
+            parts[slot] = picked;
+            field = parts.filter(Boolean).join(',');
+        }
         const patch = { field };
         // Fill in a label from the field the first time one is picked.
-        const option = (this.fieldOptions || []).find((o) => o.value === field);
-        if (option && !this.isSection && !item.label) {
+        const option = (this.fieldOptions || []).find((o) => o.value === picked);
+        if (option && slot === 0 && !this.isSection && !item.label) {
             patch.label = option.label.replace(/\s*\(.*\)$/, '').replace(' › Name', '');
         }
         this.update(index, patch);

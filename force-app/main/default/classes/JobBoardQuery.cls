@@ -37,6 +37,14 @@ public with sharing class JobBoardQuery {
         Schema.DisplayType.PERCENT, Schema.DisplayType.LONG
     };
 
+    static final Set<String> NUMBER_FILTERS = new Set<String>{ 'minNumber', 'maxNumber', 'range' };
+
+    /**
+     * Commercial fields that must never reach candidates, whatever the guest user's field access or
+     * the board's configuration says. Bill rates and margins are what the client is charged.
+     */
+    static final Pattern BLOCKED_FIELD_PATTERN = Pattern.compile('(?i).*(bill_rate|billrate|margin|markup|mark_up|fee_percent).*');
+
     /** Lets tests supply a setting record, since custom metadata cannot be inserted in tests. */
     @TestVisible static Job_Board_Setting__mdt settingOverride;
 
@@ -182,7 +190,7 @@ public with sharing class JobBoardQuery {
             return resolvedCache.get(key);
         }
         ResolvedField result;
-        if (PATH_PATTERN.matcher(path).matches()) {
+        if (PATH_PATTERN.matcher(path).matches() && !isBlockedField(path)) {
             if (!path.contains('.')) {
                 Schema.SObjectField f = getJobFieldMap().get(path);
                 if (f != null) {
@@ -212,6 +220,10 @@ public with sharing class JobBoardQuery {
         }
         resolvedCache.put(key, result);
         return result;
+    }
+
+    public static Boolean isBlockedField(String path) {
+        return String.isNotBlank(path) && BLOCKED_FIELD_PATTERN.matcher(path).matches();
     }
 
     ResolvedField resolveOrWarn(String rawPath) {
@@ -332,6 +344,10 @@ public with sharing class JobBoardQuery {
             if (f == null || String.isBlank(f.field) || String.isBlank(f.type)) {
                 continue;
             }
+            if (NUMBER_FILTERS.contains(f.type)) {
+                addNumberFilter(f);
+                continue;
+            }
             ResolvedField rf = resolveOrWarn(f.field);
             if (rf == null) {
                 continue;
@@ -351,18 +367,6 @@ public with sharing class JobBoardQuery {
                             clauses.add(rf.path + ' LIKE ' + bind('%' + escapeLike(f.text.trim().left(100)) + '%'));
                         } else {
                             addWarning('Field "' + f.field + '" is not a text field, so its text filter was skipped.');
-                        }
-                    }
-                }
-                when 'minNumber', 'maxNumber', 'range' {
-                    if (!NUMBER_TYPES.contains(t)) {
-                        addWarning('Field "' + f.field + '" is not a number or currency field, so its range filter was skipped.');
-                    } else {
-                        if (f.min != null) {
-                            clauses.add(rf.path + ' >= ' + bind(f.min));
-                        }
-                        if (f.max != null) {
-                            clauses.add(rf.path + ' <= ' + bind(f.max));
                         }
                     }
                 }
@@ -387,6 +391,43 @@ public with sharing class JobBoardQuery {
                     addWarning('Filter type "' + f.type + '" is not supported.');
                 }
             }
+        }
+    }
+
+    /**
+     * Amount filters. "field" may list several comma-separated number fields, which are OR'd, so
+     * one filter can cover jobs that only fill in some of them. For example, a pay-rate filter on
+     * "TR1__Maximum_Pay_Rate__c,TR1__Minimum_Pay_Rate__c" with min 15 matches a job when either rate
+     * is at least 15. That is the same as "this job can pay at least 15".
+     */
+    void addNumberFilter(FilterInput f) {
+        if (f.min == null && f.max == null) {
+            return;
+        }
+        List<String> ors = new List<String>();
+        for (String raw : f.field.split(',')) {
+            if (String.isBlank(raw)) {
+                continue;
+            }
+            ResolvedField rf = resolveOrWarn(raw.trim());
+            if (rf == null) {
+                continue;
+            }
+            if (!NUMBER_TYPES.contains(rf.describe.getType()) || !rf.describe.isFilterable()) {
+                addWarning('Field "' + raw.trim() + '" is not a number or currency field, so it was left out of its amount filter.');
+                continue;
+            }
+            List<String> parts = new List<String>();
+            if (f.min != null) {
+                parts.add(rf.path + ' >= ' + bind(f.min));
+            }
+            if (f.max != null) {
+                parts.add(rf.path + ' <= ' + bind(f.max));
+            }
+            ors.add('(' + String.join(parts, ' AND ') + ')');
+        }
+        if (!ors.isEmpty()) {
+            clauses.add(ors.size() == 1 ? ors[0] : '(' + String.join(ors, ' OR ') + ')');
         }
     }
 

@@ -1,6 +1,17 @@
 import { LightningElement, api, track, wire } from 'lwc';
 import getJobFieldOptions from '@salesforce/apex/JobBoardController.getJobFieldOptions';
-import { DEFAULT_CONFIG, LABEL_GROUPS, THEME_COLORS, parseConfig, deepClone, setPath, reduceError } from 'c/jobBoardConfig';
+import {
+    DEFAULT_CONFIG,
+    LABEL_GROUPS,
+    THEME_COLORS,
+    PAY_FIELD_OPTION,
+    parseConfig,
+    deepClone,
+    setPath,
+    reduceError
+} from 'c/jobBoardConfig';
+
+const isAmountOption = (o) => ['currency', 'double', 'integer', 'percent'].includes(o.type);
 
 const SORT_OPTIONS = [
     { value: 'newest', label: 'Newest first' },
@@ -77,6 +88,31 @@ export default class JobBoardPropertyEditor extends LightningElement {
         return base;
     }
 
+    /** Card and detail summary fields can also use the $pay virtual field. */
+    get displayFieldOptions() {
+        return [PAY_FIELD_OPTION, ...this.fieldOptions];
+    }
+
+    get recordTypeFieldOptions() {
+        return this.optionsWith(this.editorValues.pay.recordTypeField, (o) => ['string', 'picklist'].includes(o.type));
+    }
+
+    get payLowSalaryOptions() {
+        return this.optionsWith(this.editorValues.pay.salaryLowField, isAmountOption);
+    }
+
+    get payHighSalaryOptions() {
+        return this.optionsWith(this.editorValues.pay.salaryHighField, isAmountOption);
+    }
+
+    get payLowRateOptions() {
+        return this.optionsWith(this.editorValues.pay.rateLowField, isAmountOption);
+    }
+
+    get payHighRateOptions() {
+        return this.optionsWith(this.editorValues.pay.rateHighField, isAmountOption);
+    }
+
     get titleFieldOptions() {
         return this.optionsWith(this.editorValues.data.titleField, (o) => ['string', 'picklist', 'textarea'].includes(o.type));
     }
@@ -86,7 +122,7 @@ export default class JobBoardPropertyEditor extends LightningElement {
     }
 
     get salaryFieldOptions() {
-        return this.optionsWith(this.editorValues.data.salaryField, (o) => ['currency', 'double', 'integer', 'percent'].includes(o.type));
+        return this.optionsWith(this.editorValues.data.salaryField, isAmountOption);
     }
 
     get snippetFieldOptions() {

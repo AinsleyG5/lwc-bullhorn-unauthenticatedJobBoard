@@ -18,8 +18,13 @@
                     </div>
                 </div>
 
-                <lightning-combobox label="Field" value={row.field} options={row.options} data-index={row.index}
-                    onchange={handleFieldChange} dropdown-alignment="auto"></lightning-combobox>
+                <lightning-combobox label="Field" value={row.primaryField} options={row.options} data-index={row.index}
+                    data-slot="0" onchange={handleFieldChange} dropdown-alignment="auto"></lightning-combobox>
+                <template lwc:if={row.isAmount}>
+                    <lightning-combobox label="Or field (optional)" value={row.secondaryField} options={row.secondaryOptions}
+                        data-index={row.index} data-slot="1" onchange={handleFieldChange} dropdown-alignment="auto"
+                        field-level-help="A job matches when either field meets the amount, e.g. Salary High or Salary Low."></lightning-combobox>
+                </template>
 
                 <template lwc:if={isSection}>
                     <lightning-input label="Heading (optional)" value={row.heading} data-index={row.index} data-key="heading"

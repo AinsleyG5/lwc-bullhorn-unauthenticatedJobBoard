@@ -14,6 +14,9 @@ import {
     isEmpty,
     isBuilderContext,
     reduceError,
+    formatPay,
+    payFields,
+    PAY_FIELD,
     FILTER_TYPES,
     CHOICE_TYPES
 } from 'c/jobBoardConfig';
@@ -136,12 +139,22 @@ export default class JobBoard extends NavigationMixin(LightningElement) {
 
     get selectFields() {
         const { data, card } = this.cfg;
-        return unique([data.titleField, ...card.fields.map((f) => f.field), data.snippetField]);
+        return this.queryFields([data.titleField, ...card.fields.map((f) => f.field), data.snippetField]);
     }
 
     get detailFields() {
         const { data, detail } = this.cfg;
-        return unique([data.titleField, ...detail.sidebarFields.map((f) => f.field), ...detail.sections.map((s) => s.field)]);
+        return this.queryFields([data.titleField, ...detail.sidebarFields.map((f) => f.field), ...detail.sections.map((s) => s.field)]);
+    }
+
+    /** Swaps virtual fields such as $pay for the real fields they are built from. */
+    queryFields(list) {
+        const out = [];
+        list.forEach((f) => {
+            if (f === PAY_FIELD) out.push(...payFields(this.cfg.pay));
+            else if (f && !f.startsWith('$')) out.push(f);
+        });
+        return unique(out);
     }
 
     get usableFilters() {
@@ -454,6 +467,10 @@ export default class JobBoard extends NavigationMixin(LightningElement) {
     }
 
     fieldValue(row, field, label) {
+        if (field === PAY_FIELD) {
+            const pay = formatPay(row, this.cfg.pay, this.cfg.data.currencyCode);
+            return { key: `${row.Id}|${field}|${label}`, label: label || 'Pay', raw: pay, value: pay || this.labels.emptyValue };
+        }
         const meta = this.fieldMeta[field] || {};
         return {
             key: `${row.Id}|${field}|${label}`,

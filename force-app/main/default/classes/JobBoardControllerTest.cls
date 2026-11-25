@@ -23,8 +23,13 @@ private class JobBoardControllerTest {
         accountId = acc.Id;
 
         List<SObject> jobs = new List<SObject>();
-        jobs.add(newJob('Warehouse Operative - Hatfield', 'Open', 'Hatfield'));
-        jobs.add(newJob('Mail Sorter - Friends and Family', 'Open', 'London'));
+        SObject permanent = newJob('Warehouse Operative - Hatfield', 'Open', 'Hatfield');
+        permanent.put('TR1__Salary_Low__c', 24000);
+        permanent.put('TR1__Salary_High__c', 28000);
+        jobs.add(permanent);
+        SObject contract = newJob('Mail Sorter - Friends and Family', 'Open', 'London');
+        contract.put('TR1__Minimum_Pay_Rate__c', 12.50); // only the minimum rate is filled in
+        jobs.add(contract);
         jobs.add(newJob('Closed Role', 'Closed', 'Hatfield'));
         insert jobs;
     }
@@ -88,6 +93,43 @@ private class JobBoardControllerTest {
         JobBoardController.SearchResult res = JobBoardController.searchJobs(searchJson(null, filters));
         Assert.areEqual(1, res.total);
         Assert.isTrue(res.warnings.size() >= 2, 'Mismatched filter types should warn, not fail');
+    }
+
+    @IsTest
+    static void amountFiltersMatchAnyListedField() {
+        setup(null);
+        // Rate filter across max OR min: the contract job only has a minimum rate.
+        JobBoardController.SearchResult res = JobBoardController.searchJobs(searchJson(null, new List<Map<String, Object>>{
+            new Map<String, Object>{ 'field' => 'TR1__Maximum_Pay_Rate__c,TR1__Minimum_Pay_Rate__c', 'type' => 'minNumber', 'min' => 12 }
+        }));
+        Assert.areEqual(1, res.total);
+        Assert.areEqual('Mail Sorter - Friends and Family', res.rows[0].get('Name'));
+
+        // Salary filter: 26k+ matches the 24k-28k job through Salary High.
+        res = JobBoardController.searchJobs(searchJson(null, new List<Map<String, Object>>{
+            new Map<String, Object>{ 'field' => 'TR1__Salary_High__c,TR1__Salary_Low__c', 'type' => 'minNumber', 'min' => 26000 }
+        }));
+        Assert.areEqual(1, res.total);
+
+        res = JobBoardController.searchJobs(searchJson(null, new List<Map<String, Object>>{
+            new Map<String, Object>{ 'field' => 'TR1__Salary_High__c,TR1__Salary_Low__c', 'type' => 'minNumber', 'min' => 50000 }
+        }));
+        Assert.areEqual(0, res.total);
+    }
+
+    @IsTest
+    static void billRatesAreNeverReturned() {
+        setup(null);
+        String req = JSON.serialize(new Map<String, Object>{
+            'accountId' => accountId,
+            'fields' => new List<String>{ 'Name', 'TR1__Maximum_Bill_Rate__c', 'TR1__Minimum_Bill_Rate__c' }
+        });
+        JobBoardController.SearchResult res = JobBoardController.searchJobs(req);
+        Assert.isFalse(res.fieldMeta.containsKey('TR1__Maximum_Bill_Rate__c'));
+        Assert.isFalse(res.rows[0].containsKey('TR1__Maximum_Bill_Rate__c'));
+        for (JobBoardController.FieldOption o : JobBoardController.getJobFieldOptions()) {
+            Assert.isFalse(o.value.containsIgnoreCase('Bill_Rate'), 'Bill rates must not be offered in the editor');
+        }
     }
 
     @IsTest

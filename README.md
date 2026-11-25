@@ -71,21 +71,33 @@ Everything lives in one JSON design attribute. Anything missing falls back to `D
 
 Relationship fields one level deep are supported anywhere a field is accepted, e.g. `RecordType.Name`, `TR1__Account__r.BillingCity`.
 
-## Field names to verify in the demo org
+## Pay (salary and rates)
 
-The defaults use TR1 field names that are best guesses and need checking in the org. Anything that doesn't exist is skipped with a setup note in Experience Builder, except the base-criteria fields, which raise a clear configuration error.
+Pick the **Pay** virtual field (`$pay`) for a card or summary-panel row. It chooses what to show per job:
+
+| Job record type | Shows | Fields |
+|---|---|---|
+| Listed in *Salaried job types* (default `Permanent`) | salary range, e.g. `£24,000 – £28,000 per year` | `TR1__Salary_Low__c`, `TR1__Salary_High__c` |
+| Anything else (Contract, etc.) | pay-rate range, e.g. `£12.50 per hour` | `TR1__Minimum_Pay_Rate__c`, `TR1__Maximum_Pay_Rate__c` |
+
+Whichever of low/high is filled in gets used: one value shows on its own, two show as a range. If the preferred pair is empty, the other pair is shown. Fields, job types and suffixes are all set in the editor's **Pay** section.
+
+The default filters include **Annual salary** (`TR1__Salary_High__c` OR `TR1__Salary_Low__c` ≥ band) and **Pay rate** (`TR1__Maximum_Pay_Rate__c` OR `TR1__Minimum_Pay_Rate__c` ≥ band). Amount filters accept up to two fields, OR'd, so a contract job with only a minimum rate is still found. *Highest salary* sorting uses `TR1__Salary_High__c`.
+
+**Bill rates are never shown.** `JobBoardQuery` refuses any field whose name contains `Bill_Rate`, `Margin`, `Markup` or `Fee_Percent`, whatever the configuration or the guest's field access. The editor doesn't offer them either. Still, don't give the guest user field access to them.
+
+## Field names
+
+Confirmed: `TR1__Account__c`, `TR1__Status__c`, `TR1__Post_Externally__c`, `TR1__City__c`, `TR1__Function__c`, `TR1__Open_Date__c`, `TR1__Salary_Low__c`, `TR1__Salary_High__c`, `TR1__Minimum_Pay_Rate__c`, `TR1__Maximum_Pay_Rate__c`.
+
+Still to check in the org. Fields that don't exist are skipped with a setup note in Experience Builder:
 
 | Default | Used for |
 |---|---|
-| `TR1__Account__c` | account lookup (base criteria) |
-| `TR1__Status__c` = `Open` | open jobs (base criteria) |
-| `TR1__Post_Externally__c` | posted externally (base criteria) |
-| `TR1__City__c`, `TR1__Function__c`, `RecordType.Name` | filters, card, detail |
 | `TR1__External_Job_Title__c` | "Job title contains" filter |
-| `TR1__Open_Date__c` | newest-first sort, date posted filter |
 | `TR1__Job_Number__c` | detail panel |
 | `TR1__Client_Job_Description__c`, `TR1__Responsibilities__c`, `TR1__Experience_Requirements__c` | card summary, detail sections |
-| *(salary: TBC)* | salary filter, card, detail, salary sort |
+| Record type named `Permanent` | which jobs show salary rather than rate |
 
 ## Ideas for more filters
 

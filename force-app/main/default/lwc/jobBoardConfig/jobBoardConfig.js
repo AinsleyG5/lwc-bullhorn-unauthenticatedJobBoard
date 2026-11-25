@@ -12,6 +12,10 @@ import CURRENCY from '@salesforce/i18n/currency';
 export const FILTER_TYPES = ['multi', 'text', 'minNumber', 'maxNumber', 'datePosted', 'boolean'];
 export const CHOICE_TYPES = ['minNumber', 'maxNumber', 'datePosted'];
 
+/** Virtual field: salary or pay rate depending on job type (see DEFAULT_CONFIG.pay). */
+export const PAY_FIELD = '$pay';
+export const PAY_FIELD_OPTION = { label: 'Pay: salary or rate, by job type ($pay)', value: PAY_FIELD, type: 'virtual' };
+
 export const DEFAULT_CONFIG = {
     version: 1,
     data: {
@@ -19,7 +23,7 @@ export const DEFAULT_CONFIG = {
         titleField: 'Name',
         searchFields: 'Name',
         dateField: 'TR1__Open_Date__c',
-        salaryField: '',
+        salaryField: 'TR1__Salary_High__c',
         snippetField: 'TR1__Client_Job_Description__c',
         snippetLength: 220,
         pageSize: 12,
@@ -64,20 +68,38 @@ export const DEFAULT_CONFIG = {
         { id: 'f_function', field: 'TR1__Function__c', label: 'Job function', type: 'multi', options: '', expanded: true },
         { id: 'f_location', field: 'TR1__City__c', label: 'Location', type: 'multi', options: '', expanded: true },
         { id: 'f_type', field: 'RecordType.Name', label: 'Job type', type: 'multi', options: '', expanded: true },
-        { id: 'f_salary', field: '', label: 'Salary', type: 'minNumber', options: '20000,25000,30000,40000,50000', expanded: true },
+        // Amount filters may list several fields; a job matches when any of them meets the band.
+        { id: 'f_salary', field: 'TR1__Salary_High__c,TR1__Salary_Low__c', label: 'Annual salary', type: 'minNumber', options: '20000,25000,30000,40000,50000,60000', expanded: true },
+        { id: 'f_rate', field: 'TR1__Maximum_Pay_Rate__c,TR1__Minimum_Pay_Rate__c', label: 'Pay rate', type: 'minNumber', options: '12,13,15,18,20,25', expanded: false },
         { id: 'f_title', field: 'TR1__External_Job_Title__c', label: 'Job title contains', type: 'text', options: '', expanded: false },
         { id: 'f_posted', field: 'TR1__Open_Date__c', label: 'Date posted', type: 'datePosted', options: '1,7,14,30', expanded: false }
     ],
     card: {
         fields: [
             { id: 'c_location', field: 'TR1__City__c', label: 'Location' },
-            { id: 'c_salary', field: '', label: 'Salary' }
+            { id: 'c_salary', field: PAY_FIELD, label: 'Salary' }
         ]
+    },
+    /**
+     * The "Pay" virtual field ($pay). Permanent jobs (by record type) show the salary range and
+     * other jobs show the pay-rate range. Each falls back to the other when it is empty.
+     * Bill rates are never used: they are what the client is charged.
+     */
+    pay: {
+        recordTypeField: 'RecordType.Name',
+        permanentRecordTypes: 'Permanent',
+        salaryLowField: 'TR1__Salary_Low__c',
+        salaryHighField: 'TR1__Salary_High__c',
+        rateLowField: 'TR1__Minimum_Pay_Rate__c',
+        rateHighField: 'TR1__Maximum_Pay_Rate__c',
+        salarySuffix: 'per year',
+        rateSuffix: 'per hour',
+        rangeSeparator: ' – '
     },
     detail: {
         sidebarFields: [
             { id: 'd_location', field: 'TR1__City__c', label: 'Location' },
-            { id: 'd_salary', field: '', label: 'Salary' },
+            { id: 'd_salary', field: PAY_FIELD, label: 'Salary' },
             { id: 'd_type', field: 'RecordType.Name', label: 'Job type' },
             { id: 'd_function', field: 'TR1__Function__c', label: 'Job function' },
             { id: 'd_ref', field: 'TR1__Job_Number__c', label: 'Job reference' },
@@ -330,16 +352,55 @@ export function isBuilderContext() {
 // ------------------------------------------------------------------ value formatting
 
 const moneyFormatters = {};
-export function formatMoney(value, currencyCode) {
+/** Whole amounts show no pence (£32,000); fractional ones show two places (£12.50). */
+export function formatMoney(value, currencyCode, forceDecimals = false) {
     const code = currencyCode || CURRENCY || 'GBP';
-    if (!moneyFormatters[code]) {
+    const n = Number(value);
+    const digits = forceDecimals || !Number.isInteger(n) ? 2 : 0;
+    const key = `${code}|${digits}`;
+    if (!moneyFormatters[key]) {
+        const opts = { minimumFractionDigits: digits, maximumFractionDigits: digits };
         try {
-            moneyFormatters[code] = new Intl.NumberFormat(LOCALE, { style: 'currency', currency: code, maximumFractionDigits: 0 });
+            moneyFormatters[key] = new Intl.NumberFormat(LOCALE, { style: 'currency', currency: code, ...opts });
         } catch (e) {
-            moneyFormatters[code] = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 0 });
+            moneyFormatters[key] = new Intl.NumberFormat(LOCALE, opts);
         }
     }
-    return moneyFormatters[code].format(Number(value));
+    return moneyFormatters[key].format(n);
+}
+
+/** The API fields the $pay virtual field reads. */
+export function payFields(pay) {
+    return [pay.recordTypeField, pay.salaryLowField, pay.salaryHighField, pay.rateLowField, pay.rateHighField].filter(Boolean);
+}
+
+function moneyRange(low, high, suffix, pay, currencyCode) {
+    const lo = isEmpty(low) ? null : Number(low);
+    const hi = isEmpty(high) ? null : Number(high);
+    const valid = [lo, hi].filter((n) => n !== null && Number.isFinite(n) && n > 0);
+    if (!valid.length) {
+        return '';
+    }
+    const [a, b] = [Math.min(...valid), Math.max(...valid)];
+    const pence = !Number.isInteger(a) || !Number.isInteger(b);
+    const money = (n) => formatMoney(n, currencyCode, pence);
+    const text = a === b ? money(a) : `${money(a)}${pay.rangeSeparator ?? ' – '}${money(b)}`;
+    const tail = String(suffix || '').trim();
+    return tail ? `${text}${tail.startsWith('/') ? '' : ' '}${tail}` : text;
+}
+
+/**
+ * Display text for $pay: permanent jobs (by record type) show the salary range and everything else
+ * shows the pay-rate range, using whichever of low/high is filled in. When the preferred pair is
+ * empty, the other pair is used, so a job is never shown without pay just because of its type.
+ */
+export function formatPay(row, pay, currencyCode) {
+    const recordType = String(row[pay.recordTypeField] ?? '').trim().toLowerCase();
+    const permanentTypes = splitList(pay.permanentRecordTypes).map((t) => t.toLowerCase());
+    const isPermanent = permanentTypes.includes(recordType);
+    const salary = moneyRange(row[pay.salaryLowField], row[pay.salaryHighField], pay.salarySuffix, pay, currencyCode);
+    const rate = moneyRange(row[pay.rateLowField], row[pay.rateHighField], pay.rateSuffix, pay, currencyCode);
+    return isPermanent ? salary || rate : rate || salary;
 }
 
 let dateFormatter;

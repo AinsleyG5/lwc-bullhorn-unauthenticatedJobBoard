@@ -90,7 +90,7 @@
             <!-- ============ Card ============ -->
             <lightning-accordion-section name="card" label="Job card">
                 <c-job-board-field-list-editor variant="field" add-label="Add card field" items={editorValues.card.fields}
-                    field-options={fieldOptions} data-path="card.fields" onlistchange={handleListChange}></c-job-board-field-list-editor>
+                    field-options={displayFieldOptions} data-path="card.fields" onlistchange={handleListChange}></c-job-board-field-list-editor>
                 <lightning-combobox class="spaced" label="Summary text field" name="data.snippetField" value={editorValues.data.snippetField}
                     options={snippetFieldOptions} data-return="true" onchange={handleChange}></lightning-combobox>
                 <lightning-input type="number" label="Summary length (characters)" name="data.snippetLength"
@@ -104,11 +104,35 @@
             <lightning-accordion-section name="detail" label="Job detail (Read more)">
                 <p class="hint">Summary panel</p>
                 <c-job-board-field-list-editor variant="field" add-label="Add summary field" items={editorValues.detail.sidebarFields}
-                    field-options={fieldOptions} data-path="detail.sidebarFields" onlistchange={handleListChange}></c-job-board-field-list-editor>
+                    field-options={displayFieldOptions} data-path="detail.sidebarFields" onlistchange={handleListChange}></c-job-board-field-list-editor>
                 <p class="hint spaced">Body sections</p>
                 <c-job-board-field-list-editor variant="section" add-label="Add section" items={editorValues.detail.sections}
                     field-options={fieldOptions} data-path="detail.sections" onlistchange={handleListChange}></c-job-board-field-list-editor>
             </lightning-accordion-section>
+            <!-- ============ Pay ============ -->
+            <lightning-accordion-section name="pay" label="Pay (salary &amp; rates)">
+                <p class="hint-body">Add the <b>Pay</b> field to the job card or summary panel. Jobs whose record type is listed below show their salary range; all other jobs show their pay-rate range. If the preferred range is empty, the other one is shown. Bill rates are never shown.</p>
+                <lightning-combobox label="Job type field" name="pay.recordTypeField" value={editorValues.pay.recordTypeField}
+                    options={recordTypeFieldOptions} data-return="true" onchange={handleChange}></lightning-combobox>
+                <lightning-input label="Salaried job types" name="pay.permanentRecordTypes" value={editorValues.pay.permanentRecordTypes}
+                    field-level-help="Comma-separated values of the job type field that use salary, e.g. Permanent"
+                    onchange={handleChange} onblur={handleReturnValue}></lightning-input>
+                <div class="grid-2">
+                    <lightning-combobox label="Salary from" name="pay.salaryLowField" value={editorValues.pay.salaryLowField}
+                        options={payLowSalaryOptions} data-return="true" onchange={handleChange}></lightning-combobox>
+                    <lightning-combobox label="Salary to" name="pay.salaryHighField" value={editorValues.pay.salaryHighField}
+                        options={payHighSalaryOptions} data-return="true" onchange={handleChange}></lightning-combobox>
+                    <lightning-combobox label="Rate from" name="pay.rateLowField" value={editorValues.pay.rateLowField}
+                        options={payLowRateOptions} data-return="true" onchange={handleChange}></lightning-combobox>
+                    <lightning-combobox label="Rate to" name="pay.rateHighField" value={editorValues.pay.rateHighField}
+                        options={payHighRateOptions} data-return="true" onchange={handleChange}></lightning-combobox>
+                    <lightning-input label="Salary suffix" name="pay.salarySuffix" value={editorValues.pay.salarySuffix}
+                        onchange={handleChange} onblur={handleReturnValue}></lightning-input>
+                    <lightning-input label="Rate suffix" name="pay.rateSuffix" value={editorValues.pay.rateSuffix}
+                        onchange={handleChange} onblur={handleReturnValue}></lightning-input>
+                </div>
+            </lightning-accordion-section>
+
 
             <!-- ============ Apply ============ -->
             <lightning-accordion-section name="apply" label="Apply">
