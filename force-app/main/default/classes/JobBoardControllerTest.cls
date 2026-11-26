@@ -18,7 +18,7 @@ private class JobBoardControllerTest {
         );
         JobBoardQuery.settingOverride = setting;
 
-        Account acc = new Account(Name = 'Job Board Test Co');
+        Account acc = newAccount();
         insert acc;
         accountId = acc.Id;
 
@@ -31,12 +31,44 @@ private class JobBoardControllerTest {
         contract.put('TR1__Minimum_Pay_Rate__c', 12.50); // only the minimum rate is filled in
         jobs.add(contract);
         jobs.add(newJob('Closed Role', 'Closed', 'Hatfield'));
-        insert jobs;
+        // One at a time: some orgs run job automation that is not bulk-safe (e.g. a URL-slug flow
+        // action that only returns a value for the first record in a batch).
+        for (SObject job : jobs) {
+            insert job;
+        }
+    }
+
+    /**
+     * Builds an Account that org validation rules accept. Some orgs (e.g. Reed) require a job's
+     * account to be an RPO_Account record type, and an RPO account to have BH_RPO__c filled in.
+     * Both are set only when they exist, so the test still runs in orgs without them.
+     */
+    static Account newAccount() {
+        Account acc = new Account(Name = 'Job Board Test Co');
+        Map<String, Schema.RecordTypeInfo> recordTypes = Schema.SObjectType.Account.getRecordTypeInfosByDeveloperName();
+        Schema.RecordTypeInfo rpo = recordTypes.get('RPO_Account');
+        if (rpo != null && rpo.isActive()) {
+            acc.put('RecordTypeId', rpo.getRecordTypeId());
+        }
+        Schema.SObjectField rpoField = Schema.SObjectType.Account.fields.getMap().get('BH_RPO__c');
+        if (rpoField != null) {
+            for (Schema.PicklistEntry pe : rpoField.getDescribe().getPicklistValues()) {
+                if (pe.isActive()) {
+                    acc.put('BH_RPO__c', pe.getValue());
+                    break;
+                }
+            }
+        }
+        return acc;
     }
 
     static SObject newJob(String name, String status, String city) {
         SObject job = Schema.getGlobalDescribe().get(JobBoardQuery.JOB_OBJECT).newSObject();
         job.put('Name', name);
+        // Org automation can build a URL slug from the job title (Reed: PQ_PrepareJobUrlName).
+        if (job.getSObjectType().getDescribe().fields.getMap().containsKey('TR1__Job_Title__c')) {
+            job.put('TR1__Job_Title__c', name);
+        }
         job.put('TR1__Account__c', accountId);
         job.put('TR1__Status__c', status);
         job.put('TR1__City__c', city);
@@ -50,7 +82,7 @@ private class JobBoardControllerTest {
             'searchFields' => new List<String>{ 'Name' },
             'fields' => new List<String>{ 'Name', 'TR1__City__c', 'RecordType.Name', 'Not_A_Field__c' },
             'filters' => filters,
-            'sortField' => 'Name',
+            'sortField' => 'TR1__City__c',
             'sortDirection' => 'ASC',
             'pageSize' => 12,
             'offset' => 0
@@ -66,7 +98,7 @@ private class JobBoardControllerTest {
 
         Assert.areEqual(2, res.total, 'Closed jobs must be excluded');
         Assert.areEqual(2, res.rows.size());
-        Assert.areEqual('Mail Sorter - Friends and Family', res.rows[0].get('Name'), 'Sorted by Name ASC');
+        Assert.areEqual('Hatfield', res.rows[0].get('TR1__City__c'), 'Sorted by city ASC');
         Assert.isTrue(res.fieldMeta.containsKey('TR1__City__c'));
         Assert.isFalse(res.warnings.isEmpty(), 'Unknown field should produce a warning');
     }
@@ -103,7 +135,7 @@ private class JobBoardControllerTest {
             new Map<String, Object>{ 'field' => 'TR1__Maximum_Pay_Rate__c,TR1__Minimum_Pay_Rate__c', 'type' => 'minNumber', 'min' => 12 }
         }));
         Assert.areEqual(1, res.total);
-        Assert.areEqual('Mail Sorter - Friends and Family', res.rows[0].get('Name'));
+        Assert.areEqual('London', res.rows[0].get('TR1__City__c'));
 
         // Salary filter: 26k+ matches the 24k-28k job through Salary High.
         res = JobBoardController.searchJobs(searchJson(null, new List<Map<String, Object>>{
@@ -152,12 +184,13 @@ private class JobBoardControllerTest {
     @IsTest
     static void detailRespectsBaseCriteria() {
         setup(null);
-        SObject closed = Database.query('SELECT Id FROM ' + JobBoardQuery.JOB_OBJECT + ' WHERE Name = \'Closed Role\' LIMIT 1');
-        SObject open = Database.query('SELECT Id FROM ' + JobBoardQuery.JOB_OBJECT + ' WHERE Name = \'Mail Sorter - Friends and Family\' LIMIT 1');
+        // Looked up by status/city, not Name: some orgs rename jobs on insert (e.g. "Account - Title").
+        SObject closed = Database.query('SELECT Id FROM ' + JobBoardQuery.JOB_OBJECT + ' WHERE TR1__Status__c = \'Closed\' AND TR1__Account__c = :accountId LIMIT 1');
+        SObject open = Database.query('SELECT Id FROM ' + JobBoardQuery.JOB_OBJECT + ' WHERE TR1__City__c = \'London\' AND TR1__Account__c = :accountId LIMIT 1');
 
         JobBoardController.DetailResult res = JobBoardController.getJobDetail(detailJson(open.Id));
         Assert.isNotNull(res.row);
-        Assert.areEqual('Mail Sorter - Friends and Family', res.row.get('Name'));
+        Assert.areEqual('London', res.row.get('TR1__City__c'));
 
         res = JobBoardController.getJobDetail(detailJson(closed.Id));
         Assert.isNull(res.row, 'Closed jobs cannot be opened by Id');

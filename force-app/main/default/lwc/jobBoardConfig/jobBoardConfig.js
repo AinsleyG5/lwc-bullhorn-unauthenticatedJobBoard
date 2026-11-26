@@ -24,7 +24,7 @@ export const DEFAULT_CONFIG = {
         searchFields: 'Name',
         dateField: 'TR1__Open_Date__c',
         salaryField: 'TR1__Salary_High__c',
-        snippetField: 'TR1__Client_Job_Description__c',
+        snippetField: 'TR1__Client_Description__c',
         snippetLength: 220,
         pageSize: 12,
         defaultSort: 'newest',
@@ -106,9 +106,10 @@ export const DEFAULT_CONFIG = {
             { id: 'd_posted', field: 'TR1__Open_Date__c', label: 'Posted' }
         ],
         sections: [
-            { id: 's_desc', field: 'TR1__Client_Job_Description__c', heading: '' },
+            { id: 's_desc', field: 'TR1__Client_Description__c', heading: '' },
             { id: 's_resp', field: 'TR1__Responsibilities__c', heading: 'Key responsibilities' },
-            { id: 's_req', field: 'TR1__Experience_Requirements__c', heading: 'What do I need?' }
+            { id: 's_req', field: 'TR1__Experience_Requirements__c', heading: 'What do I need?' },
+            { id: 's_edu', field: 'TR1__Education_Requirements__c', heading: 'Qualifications' }
         ]
     },
     apply: {

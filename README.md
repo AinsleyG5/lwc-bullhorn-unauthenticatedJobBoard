@@ -96,7 +96,7 @@ Still to check in the org. Fields that don't exist are skipped with a setup note
 |---|---|
 | `TR1__External_Job_Title__c` | "Job title contains" filter |
 | `TR1__Job_Number__c` | detail panel |
-| `TR1__Client_Job_Description__c`, `TR1__Responsibilities__c`, `TR1__Experience_Requirements__c` | card summary, detail sections |
+| `TR1__Client_Description__c`, `TR1__Responsibilities__c`, `TR1__Experience_Requirements__c`, `TR1__Education_Requirements__c` | card summary, detail sections (all four are required to post externally in ReedProd) |
 | Record type named `Permanent` | which jobs show salary rather than rate |
 
 ## Ideas for more filters
